@@ -29,7 +29,7 @@ const LoginPage = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [error, setError] = useState("");
     const navigate = useNavigate();
-    
+    const [notification, setNotification] = useState(location.state?.notification || null);
     // Login form state
     const [loginData, setLoginData] = useState({
       email: "",
@@ -505,7 +505,7 @@ const LoginPage = () => {
       margin: 0, 
       boxSizing: "border-box",
     }}>
-      <BottomNavBar content={<LoginContent />} />
+      <LoginContent />
     </Container>
   );
 };
