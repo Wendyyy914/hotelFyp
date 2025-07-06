@@ -1,8 +1,6 @@
 // src/pages/LoginPage.js
 import React, { useState, useEffect } from "react";
 import NotificationMessage from "../components/NotificationMessage";
-import useAuth from "../hooks/useAuth";
-import axios from '../api/axios';
 // import BottomNavBar from "../components/BottomNavBar";
 import { 
   Box, 
@@ -18,7 +16,7 @@ import {
   Link
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-// import useAuth from "../hooks/useAuth";
+import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 // import axios from '../api/axios';
@@ -27,14 +25,10 @@ import { useLocation } from "react-router-dom";
 const LoginPage = () => {
 
   const LoginContent = () => {
-    const { login, isLoggedIn } = useAuth();
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const { login } = useAuth();
     const [activeTab, setActiveTab] = useState(0);
     const [error, setError] = useState("");
-    const [notification, setNotification] = useState(location.state?.notification || null);
     const navigate = useNavigate();
-    const location = useLocation();
     
     // Login form state
     const [loginData, setLoginData] = useState({
@@ -52,6 +46,13 @@ const LoginPage = () => {
       loyaltyProgram: false,
       agreeTerms: false
     });
+
+    // Clear notification after 3 seconds
+    useEffect(() => {
+      if (notification) {
+        setTimeout(() => setNotification(null), 3000);
+      }
+    }, [notification]);
 
     const handleTabChange = (event, newValue) => {
       setActiveTab(newValue);
@@ -72,14 +73,52 @@ const LoginPage = () => {
       }));
     };
 
-    const handleLogin = async () => {
+    const handleLogin = async (e) => {
+      if (e) e.preventDefault();
       try {
         setError("");
-        // Add your login logic here
-        console.log("Login data:", loginData);
-        // await login(loginData.email, loginData.password);
+        
+        // Validate email and password
+        if (!loginData.email || !loginData.password) {
+          setError("Please enter both email and password");
+          return;
+        }
+
+        // Call the login function from useAuth
+        await login(loginData.email, loginData.password);
+        
+        // Show success notification
+        setNotification({ 
+          status: 1, // 1 for success
+          message: "Login successful! Welcome back." 
+        });
+
+        // Clear form
+        setLoginData({
+          email: "",
+          password: "",
+          rememberMe: false
+        });
+
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          navigate("/", { 
+            state: { 
+              notification: { 
+                status: 1, 
+                message: "Successfully logged in!" 
+              } 
+            }
+          });
+        }, 1500);
+
       } catch (err) {
-        setError("Login failed. Please check your credentials.");
+        setError(err.message || "Login failed. Please check your credentials.");
+        // Clear password on error
+        setLoginData(prev => ({
+          ...prev,
+          password: ""
+        }));
       }
     };
 
@@ -94,8 +133,31 @@ const LoginPage = () => {
           setError("Please agree to the Terms of Service and Privacy Policy");
           return;
         }
-        // Add your register logic here
-        console.log("Register data:", registerData);
+        
+        // Call your .NET API register endpoint
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fullName: registerData.fullName,
+            email: registerData.email,
+            password: registerData.password,
+            joinLoyaltyProgram: registerData.loyaltyProgram
+          })
+        });
+
+        if (response.ok) {
+          // Registration successful, switch to login tab
+          setActiveTab(0);
+          setError("");
+          // You might want to show a success message
+          alert("Registration successful! Please log in.");
+        } else {
+          const error = await response.json();
+          setError(error.message || "Registration failed. Please try again.");
+        }
       } catch (err) {
         setError("Registration failed. Please try again.");
       }
@@ -115,7 +177,13 @@ const LoginPage = () => {
           overflow: "auto"
         }}
       >
-        {notification && <NotificationMessage status={notification.status} message={notification.message} />}
+        {notification && (
+          <NotificationMessage 
+            status={notification.status} 
+            message={notification.message} 
+          />
+        )}
+        
         {/* Header */}
         <Box
           sx={{
@@ -131,7 +199,7 @@ const LoginPage = () => {
           }}
         >
           <IconButton onClick={handleBack} sx={{ color: "#4d7c0f" }}>
-            {/* <ArrowBack /> */}
+            ←
           </IconButton>
           <Typography
             variant="h6"
@@ -273,6 +341,7 @@ const LoginPage = () => {
                   fullWidth
                   variant="contained"
                   onClick={handleLogin}
+                  disabled={!loginData.email || !loginData.password}
                   sx={{
                     backgroundColor: "#4d7c0f",
                     padding: "14px",
@@ -281,6 +350,9 @@ const LoginPage = () => {
                     marginBottom: "15px",
                     "&:hover": {
                       backgroundColor: "#3d6a0a"
+                    },
+                    "&:disabled": {
+                      backgroundColor: "#cccccc"
                     }
                   }}
                 >
@@ -386,6 +458,7 @@ const LoginPage = () => {
                   fullWidth
                   variant="contained"
                   onClick={handleRegister}
+                  disabled={!registerData.fullName || !registerData.email || !registerData.password || !registerData.confirmPassword || !registerData.agreeTerms}
                   sx={{
                     backgroundColor: "#4d7c0f",
                     padding: "14px",
@@ -394,6 +467,9 @@ const LoginPage = () => {
                     marginBottom: "15px",
                     "&:hover": {
                       backgroundColor: "#3d6a0a"
+                    },
+                    "&:disabled": {
+                      backgroundColor: "#cccccc"
                     }
                   }}
                 >
@@ -429,8 +505,7 @@ const LoginPage = () => {
       margin: 0, 
       boxSizing: "border-box",
     }}>
-      {/* <BottomNavBar content={<LoginContent />} /> */}
-      <LoginContent />
+      <BottomNavBar content={<LoginContent />} />
     </Container>
   );
 };
