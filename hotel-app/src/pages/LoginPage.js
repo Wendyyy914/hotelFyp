@@ -29,14 +29,13 @@ const LoginPage = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [error, setError] = useState("");
     const navigate = useNavigate();
-    //const [notification, setNotification] = useState(location.state?.notification || null);
-    const [notification, setNotification] = useState("");
-    // Login form state
-    const [loginData, setLoginData] = useState({
-      email: "",
-      password: "",
-      rememberMe: false
-    });
+    const location = useLocation();
+    const [notification, setNotification] = useState(location.state?.notification || null);
+    
+    // Login form state - simplified to match pattern from code 2
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
     
     // Register form state
     const [registerData, setRegisterData] = useState({
@@ -60,13 +59,6 @@ const LoginPage = () => {
       setError("");
     };
 
-    const handleLoginChange = (field) => (event) => {
-      setLoginData(prev => ({
-        ...prev,
-        [field]: event.target.type === 'checkbox' ? event.target.checked : event.target.value
-      }));
-    };
-
     const handleRegisterChange = (field) => (event) => {
       setRegisterData(prev => ({
         ...prev,
@@ -80,13 +72,13 @@ const LoginPage = () => {
         setError("");
         
         // Validate email and password
-        if (!loginData.email || !loginData.password) {
+        if (!email || !password) {
           setError("Please enter both email and password");
           return;
         }
 
-        // Call the login function from useAuth
-        await login(loginData.email, loginData.password);
+        // Call the login function from useAuth - using email and password directly
+        await login(email, password);
         
         // Show success notification
         setNotification({ 
@@ -95,11 +87,9 @@ const LoginPage = () => {
         });
 
         // Clear form
-        setLoginData({
-          email: "",
-          password: "",
-          rememberMe: false
-        });
+        setEmail("");
+        setPassword("");
+        setRememberMe(false);
 
         // Redirect to home page after a short delay
         setTimeout(() => {
@@ -116,10 +106,7 @@ const LoginPage = () => {
       } catch (err) {
         setError(err.message || "Login failed. Please check your credentials.");
         // Clear password on error
-        setLoginData(prev => ({
-          ...prev,
-          password: ""
-        }));
+        setPassword("");
       }
     };
 
@@ -306,8 +293,8 @@ const LoginPage = () => {
                   type="email"
                   label="Email Address"
                   placeholder="Enter your email"
-                  value={loginData.email}
-                  onChange={handleLoginChange('email')}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   sx={{ marginBottom: "20px" }}
                 />
 
@@ -316,16 +303,16 @@ const LoginPage = () => {
                   type="password"
                   label="Password"
                   placeholder="Enter your password"
-                  value={loginData.password}
-                  onChange={handleLoginChange('password')}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   sx={{ marginBottom: "20px" }}
                 />
 
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={loginData.rememberMe}
-                      onChange={handleLoginChange('rememberMe')}
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
                     />
                   }
                   label="Remember me"
@@ -342,7 +329,7 @@ const LoginPage = () => {
                   fullWidth
                   variant="contained"
                   onClick={handleLogin}
-                  disabled={!loginData.email || !loginData.password}
+                  disabled={!email || !password}
                   sx={{
                     backgroundColor: "#4d7c0f",
                     padding: "14px",
