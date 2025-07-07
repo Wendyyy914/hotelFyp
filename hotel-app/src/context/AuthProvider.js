@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     try {
-      const response = await axios.post("/auth/login", { username, password });
+      const response = await axios.post("/auth/login", { email, password });
       const token = response.data.token;
       localStorage.setItem("token", token);
       const userInfo = JSON.parse(atob(token.split(".")[1]));
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, isLoggedIn}}>
       {children}
     </AuthContext.Provider>
   );

@@ -51,7 +51,7 @@ const HomePage = () => {
     };
 
     const handleProfileClick = () => {
-      navigate('/profile');
+      navigate('/login');
     };
 
     const handleChatClick = () => {
